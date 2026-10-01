@@ -1,0 +1,64 @@
+#===============================================================================
+# Build tt-web-player
+#
+# On every push to `main`, compiles the web client and publishes ONLY the
+# compiled output (the contents of `dist/`) to the `dist` branch of this
+# repository, replacing whatever was there before.
+#
+# The tt-web Docker image downloads that branch when it is built (see
+# tt-web's `update_tt_web_player` script), so it never needs Node/npm or this
+# repository's source code. Each publish is a single commit with no history,
+# so cloning the branch only ever downloads the latest build.
+#===============================================================================
+name: Build
+
+on:
+  push:
+    branches: [main]
+  # Allow re-publishing a build manually from the Actions tab.
+  workflow_dispatch:
+
+# Pushing to the `dist` branch needs write access to the repository.
+permissions:
+  contents: write
+
+# If several pushes land close together, only publish the newest one.
+concurrency:
+  group: build-dist
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish build to the dist branch
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          # Snapshot dist/ into a brand new commit with no parent, using a
+          # throwaway index so the checked-out source tree is left untouched.
+          # --force is needed because dist/ is listed in .gitignore.
+          export GIT_INDEX_FILE="$RUNNER_TEMP/dist-index"
+          git --work-tree=dist add --all --force
+          tree="$(git write-tree)"
+          commit="$(git commit-tree "$tree" -m "Build of $GITHUB_SHA")"
+          git push --force origin "$commit:refs/heads/dist"
+          echo "Published build of $GITHUB_SHA to the dist branch as $commit."
