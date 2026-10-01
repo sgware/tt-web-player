@@ -1,0 +1,22 @@
+{
+  "structureagency": {
+    "label": "Structure & agency",
+    "heading": "How is the story going?",
+    "description": "Please tell us how much you agree with each statement.",
+    "scale": ["Completely Disagree", "Disagree", "Neutral", "Agree", "Completely Agree"],
+    "initialValue": 2,
+    "questions": [
+      {
+        "item": "structure",
+        "statement": "Every action in this story is important and well-integrated into the narrative."
+      },
+      {
+        "item": "agency",
+        "statement": "I feel free to make meaningful choices that will influence this story."
+      }
+    ],
+    "askAfterChoiceTypes": ["PASS"],
+    "minSecondsBetweenAsks": 60,
+    "askAtStop": true
+  }
+}
