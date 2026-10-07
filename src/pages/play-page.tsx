@@ -18,7 +18,7 @@ interface PlayPageProps {
   stopInfo: StopMessage | null;
   endInfo: EndMessage | null;
   playerId: string | undefined;
-  /** The in-game questions to ask (from the `questions` URL parameter), or null for none. */
+  study: string | undefined;
   questionSet: QuestionSet | null;
   sendChoice: (index: number) => void;
   sendReport: (item: string, value: string, comment: string) => void;
@@ -31,6 +31,7 @@ export function PlayPage({
   stopInfo,
   endInfo,
   playerId,
+  study,
   questionSet,
   sendChoice,
   sendReport,
@@ -68,8 +69,9 @@ export function PlayPage({
 
   const endLink = endInfo
     ? {
-        href: `post.php?${new URLSearchParams({
+        href: `/after.php?${new URLSearchParams({
           ...(playerId ? { id: playerId } : {}),
+          ...(study ? { study } : {}),
           session: endInfo.session,
         }).toString()}`,
         label: "The story has ended. Click here!",
@@ -77,7 +79,7 @@ export function PlayPage({
     : null;
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-5xl flex-col gap-4 px-4 py-8">
+    <div className="mx-auto flex h-svh w-full max-w-5xl flex-col gap-4 px-4 py-4 md:py-8">
       {questionSet && (
         <QuestionsDialog
           key={questions.reason === "stop" ? "stop" : "choice"}
@@ -88,27 +90,28 @@ export function PlayPage({
           onSubmit={questions.submit}
         />
       )}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex shrink-0 items-center justify-between gap-2">
         <RoleBanner role={role} />
         <TurnTimer active={choices.length > 0 && !pendingChoice} resetKey={gameStatus} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="md:col-span-2">
-          <CardContent className="space-y-4">
-            <Transcript
-              lines={lines}
-              pendingChoiceText={pendingChoice ? `You chose: ${pendingChoice.description}` : null}
-              stopMessage={stopInfo && !endingReached ? stopInfo.message : null}
-              endLink={endLink}
-            />
-            {choices.length > 0 && !pendingChoice && (
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] gap-4 md:grid-cols-3 md:grid-rows-1">
+        <Card className="min-h-0 md:col-span-2">
+          <Transcript
+            className="min-h-0 flex-1 px-(--card-spacing)"
+            lines={lines}
+            pendingChoiceText={pendingChoice ? `You chose: ${pendingChoice.description}` : null}
+            stopMessage={stopInfo && !endingReached ? stopInfo.message : null}
+            endLink={endLink}
+          />
+          {choices.length > 0 && !pendingChoice && (
+            <CardContent className="max-h-[45%] shrink-0 overflow-y-auto border-t pt-4">
               <ChoiceList choices={choices} lastHistoryTurn={lastHistoryTurn} onChoose={handleChoose} />
-            )}
-          </CardContent>
+            </CardContent>
+          )}
         </Card>
 
-        <SidePanel entities={entities} />
+        <SidePanel entities={entities} className="max-h-[30svh] md:max-h-full" />
       </div>
     </div>
   );
