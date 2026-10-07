@@ -16,7 +16,10 @@ interface WorldSelectProps {
   disabled?: boolean;
 }
 
-/** Reusable dropdown for choosing a story world, with "Any world" as the default option. */
+/**
+ * Reusable dropdown for choosing a story world, with "Any world" as the
+ * default option.
+ **/
 export function WorldSelect({ worlds, value, onChange, disabled }: WorldSelectProps) {
   return (
     <Select
@@ -27,10 +30,10 @@ export function WorldSelect({ worlds, value, onChange, disabled }: WorldSelectPr
       <SelectTrigger className="w-full" aria-label="Story world">
         <SelectValue placeholder="Any world" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent position="popper" className="w-(--radix-select-trigger-width)">
         <SelectItem value={ANY_WORLD_VALUE}>Any world</SelectItem>
         {worlds.map((world) => (
-          <SelectItem key={world.name} value={world.name}>
+          <SelectItem key={world.name} value={world.name} description={world.description}>
             {world.title}
           </SelectItem>
         ))}

@@ -22,7 +22,7 @@ interface PartnerSelectProps {
 /**
  * Reusable dropdown for choosing which waiting agent to play with. Only
  * agents currently available for the selected world are shown, per the
- * requirements ("Any partner" is always the default option).
+ * requirements ("Any partner" is always the default option). Each agent is
  */
 export function PartnerSelect({
   agents,
@@ -45,12 +45,12 @@ export function PartnerSelect({
       <SelectTrigger className="w-full" aria-label="Partner">
         <SelectValue placeholder="Any partner" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent position="popper" className="w-(--radix-select-trigger-width)">
         <SelectItem value={ANY_PARTNER_VALUE}>Any partner</SelectItem>
         {uniqueAgentNames.map((name) => {
           const agent = agentsByName.get(name);
           return (
-            <SelectItem key={name} value={name}>
+            <SelectItem key={name} value={name} description={agent?.description}>
               {agent?.title ?? name}
             </SelectItem>
           );
