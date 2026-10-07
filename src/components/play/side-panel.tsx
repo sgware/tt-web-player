@@ -1,19 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import type { Entity } from "@/types/protocol";
 
 interface SidePanelProps {
   entities: Entity[];
+  className?: string;
 }
 
-/** The Play Page's right side panel: every entity currently visible to this client. */
-export function SidePanel({ entities }: SidePanelProps) {
+export function SidePanel({ entities, className }: SidePanelProps) {
   return (
-    <Card className="h-fit">
+    <Card className={cn("h-fit min-h-0", className)}>
       <CardHeader>
         <CardTitle className="text-sm">What you can see</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="min-h-0 space-y-3 overflow-y-auto">
         {entities.length === 0 ? (
           <p className="text-muted-foreground text-sm">Nothing visible yet.</p>
         ) : (
@@ -21,7 +22,9 @@ export function SidePanel({ entities }: SidePanelProps) {
             <div key={entity.id}>
               {i > 0 && <Separator className="mb-3" />}
               <p className="text-sm font-medium">{entity.name}</p>
-              <p className="text-muted-foreground text-sm">{entity.description}</p>
+              <p className="text-muted-foreground text-sm">
+                {entity.description}
+              </p>
             </div>
           ))
         )}
