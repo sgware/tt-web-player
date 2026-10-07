@@ -7,6 +7,7 @@ export interface SettableParam<T> {
 
 export interface JoinSearchParams {
   id: string | undefined;
+  study: string | undefined;
   name: string;
   passwordRequired: boolean;
   world: SettableParam<string>;
@@ -17,11 +18,14 @@ export interface JoinSearchParams {
 
 const VALID_ROLES: ReadonlySet<string> = new Set(["PLAYER", "GAME_MASTER"]);
 
-export function parseJoinSearchParams(searchParams: URLSearchParams): JoinSearchParams {
+export function parseJoinSearchParams(
+  searchParams: URLSearchParams,
+): JoinSearchParams {
   const rawRole = searchParams.get("role") ?? "";
 
   return {
     id: searchParams.get("id") ?? undefined,
+    study: searchParams.get("study") ?? undefined,
     name: searchParams.get("name") || "web",
     passwordRequired: searchParams.get("password") === "true",
     world: {
