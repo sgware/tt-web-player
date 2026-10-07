@@ -38,10 +38,24 @@ export interface TandemTalesSocketState {
 }
 
 /** The server may send each message as a text or binary WebSocket frame; normalize both to text. */
-async function readMessageText(data: string | Blob | ArrayBuffer): Promise<string> {
+async function readMessageText(
+  data: string | Blob | ArrayBuffer,
+): Promise<string> {
   if (typeof data === "string") return data;
   if (data instanceof Blob) return data.text();
   return new TextDecoder().decode(data);
+}
+
+/**
+ * The server prefixes each visible entity's description with how the story
+ * refers to it (e.g. "the barista: The barista is in the shop."); keep only
+ * the text after the first ":".
+ */
+function stripDescriptionLabel(description: string): string {
+  const separator = description.indexOf(":");
+  return separator >= 0
+    ? description.slice(separator + 1).trimStart()
+    : description;
 }
 
 /**
@@ -94,7 +108,8 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
       if (isCurrent()) setStatus("open");
     };
     socket.onclose = () => {
-      if (isCurrent()) setStatus((prev) => (prev === "error" ? prev : "closed"));
+      if (isCurrent())
+        setStatus((prev) => (prev === "error" ? prev : "closed"));
     };
     socket.onerror = () => {
       if (isCurrent()) setStatus("error");
@@ -115,7 +130,13 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
           setStartInfo(parsed);
           break;
         case "Update":
-          setGameStatus(parsed.status);
+          setGameStatus({
+            ...parsed.status,
+            descriptions: parsed.status.descriptions.map((entity) => ({
+              ...entity,
+              description: stripDescriptionLabel(entity.description),
+            })),
+          });
           break;
         case "Stop":
           setStopInfo(parsed);
@@ -173,18 +194,25 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
   }, []);
 
   const sendJoin = useCallback(
-    (message: Omit<JoinMessage, "type">) => sendBinary({ type: "Join", ...message }),
+    (message: Omit<JoinMessage, "type">) =>
+      sendBinary({ type: "Join", ...message }),
     [sendBinary],
   );
 
   const sendChoice = useCallback(
-    (index: number) => sendBinary({ type: "Choice", index } satisfies ChoiceMessage),
+    (index: number) =>
+      sendBinary({ type: "Choice", index } satisfies ChoiceMessage),
     [sendBinary],
   );
 
   const sendReport = useCallback(
     (item: string, value: string, comment: string) =>
-      sendBinary({ type: "Report", item, value, comment } satisfies ReportMessage),
+      sendBinary({
+        type: "Report",
+        item,
+        value,
+        comment,
+      } satisfies ReportMessage),
     [sendBinary],
   );
 
