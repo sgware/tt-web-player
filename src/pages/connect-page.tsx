@@ -74,6 +74,11 @@ export function ConnectPage() {
       displayValue: params.id,
       source: params.id ? "url" : "default",
     },
+    {
+      label: "Study",
+      displayValue: params.study,
+      source: params.study ? "url" : "default",
+    },
     { label: "Agent name", displayValue: params.name, source: "default" },
     {
       label: "Password required",
@@ -135,6 +140,7 @@ export function ConnectPage() {
           stopInfo={stopInfo}
           endInfo={endInfo}
           playerId={params.id}
+          study={params.study}
           questionSet={questionSet}
           sendChoice={sendChoice}
           sendReport={sendReport}
