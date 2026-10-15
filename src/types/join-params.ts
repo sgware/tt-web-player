@@ -6,7 +6,7 @@ export interface SettableParam<T> {
 }
 
 export interface JoinSearchParams {
-  id: string | undefined;
+  user: string | undefined;
   study: string | undefined;
   name: string;
   passwordRequired: boolean;
@@ -24,7 +24,7 @@ export function parseJoinSearchParams(
   const rawRole = searchParams.get("role") ?? "";
 
   return {
-    id: searchParams.get("id") ?? undefined,
+    user: searchParams.get("user") ?? undefined,
     study: searchParams.get("study") ?? undefined,
     name: searchParams.get("name") || "web",
     passwordRequired: searchParams.get("password") === "true",
