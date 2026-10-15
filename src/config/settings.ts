@@ -13,15 +13,17 @@ export const TT_SERVER_HOST = "localhost";
 export const TT_SERVER_PORT = 9006;
 
 /** Tandem Tales server version this client was built against. */
-export const TT_SERVER_VERSION = "0.9.0";
+export const TT_SERVER_VERSION = "0.10.0";
 
 /** Time (in seconds) a user has to make a choice once it's their turn. */
 export const CHOICE_TIME_SECONDS = 180;
 
+export const TIMER_BAR_COLOR = "#ef4444";
+
+export const TIMER_BAR_HEIGHT_PX = 4;
+
 /**
- * Builds the WebSocket URL for the Tandem Tales server from the settings
- * above. Port 9006 is always wrapped in TLS by websockify on the server
- * side (see tt-web's start_ws_foreground script), so the client always
+ * Builds the WebSocket URL for the Tandem Tales
  * connects with `wss://`, regardless of how the page itself was loaded.
  */
 export function getTandemTalesSocketUrl(): string {
