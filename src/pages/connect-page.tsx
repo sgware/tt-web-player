@@ -6,6 +6,7 @@ import { ConnectionStatusBanner } from "@/components/connect/connection-status-b
 import type { ParameterSummaryItem } from "@/components/connect/parameter-summary";
 import { ServerErrorDialog } from "@/components/connect/server-error-dialog";
 import { WaitingPanel } from "@/components/connect/waiting-panel";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Card,
   CardContent,
@@ -70,9 +71,9 @@ export function ConnectPage() {
 
   const summaryItems: ParameterSummaryItem[] = [
     {
-      label: "Player ID",
-      displayValue: params.id,
-      source: params.id ? "url" : "default",
+      label: "User ID",
+      displayValue: params.user,
+      source: params.user ? "url" : "default",
     },
     {
       label: "Study",
@@ -139,7 +140,7 @@ export function ConnectPage() {
           gameStatus={gameStatus}
           stopInfo={stopInfo}
           endInfo={endInfo}
-          playerId={params.id}
+          userId={params.user}
           study={params.study}
           questionSet={questionSet}
           sendChoice={sendChoice}
@@ -153,6 +154,7 @@ export function ConnectPage() {
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-xl flex-col justify-center gap-4 px-4 py-10">
       <ServerErrorDialog message={serverError} onAcknowledge={handleErrorAcknowledged} />
+      <ThemeToggle className="fixed top-4 right-4" />
 
       <ConnectionStatusBanner
         status={status}
