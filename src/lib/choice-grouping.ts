@@ -1,7 +1,10 @@
-import type { Turn } from "@/types/protocol";
+import type { Entity, Turn } from "@/types/protocol";
 
-/** Above this many choices, similar ones are grouped into an expandable sub-list. */
-const GROUP_THRESHOLD = 6;
+/** At or below this many choices, everything is shown flat -- e.g. accepting or refusing a proposal. */
+const FLAT_THRESHOLD = 3;
+
+/** Above this many choices for one character, they are split further by action type. */
+const ACTION_TYPE_THRESHOLD = 3;
 
 export interface ChoiceItem {
   /** Index into the original `choices` array -- what the Choice message must send. */
@@ -9,16 +12,16 @@ export interface ChoiceItem {
   turn: Turn;
 }
 
-export interface ChoiceGroup {
-  key: string;
-  /** Present only when this group has more than one item and needs a disclosure label. */
-  label: string | null;
-  items: ChoiceItem[];
-}
-
-function bucketKey(turn: Turn): string {
-  return turn.action ? `action:${turn.action.signature.name}` : `turn:${turn.type}`;
-}
+/** A single choice button, or a labeled, expandable group of further nodes. */
+export type ChoiceNode =
+  | { kind: "choice"; key: string; item: ChoiceItem }
+  | {
+      kind: "group";
+      key: string;
+      label: string;
+      count: number;
+      children: ChoiceNode[];
+    };
 
 /** The longest common leading run of whole words shared by every description. */
 function commonWordPrefix(descriptions: string[]): string {
@@ -40,53 +43,144 @@ function capitalize(word: string): string {
   return word.length === 0 ? word : word[0].toUpperCase() + word.slice(1);
 }
 
-function groupLabel(bucket: ChoiceItem[]): string {
+/** How the story refers to a character (e.g. "the guard"), falling back to its internal name. */
+function characterLabel(entity: Entity): string {
+  return capitalize(entity.description || entity.name);
+}
+
+function actionTypeLabel(bucket: ChoiceItem[]): string {
   const first = bucket[0].turn;
 
   // When every item is a different outcome (SUCCEED/FAIL/...) of the exact
-  // same action, the descriptions only ever share a short, generic prefix
-  // (e.g. "The player…") -- the action's own neutral description reads
-  // much better as a label in that case.
-  if (first.action && bucket.every((item) => item.turn.action?.id === first.action?.id)) {
-    return `${first.action.description.replace(/\.$/, "")}…`;
+  // same action, the action's own neutral description reads best.
+  if (
+    first.action &&
+    bucket.every((item) => item.turn.action?.id === first.action?.id)
+  ) {
+    return `${capitalize(first.action.description.replace(/\.$/, ""))}…`;
   }
 
+  // A long shared opening ("Go to the…") says more than the bare action
+  // type; a short one ("The guard…") just repeats the character's group.
   const prefix = commonWordPrefix(bucket.map((item) => item.turn.description));
-  if (prefix.split(" ").filter(Boolean).length >= 2) {
+  if (prefix.split(" ").filter(Boolean).length >= 3) {
     return `${prefix}…`;
   }
-  const name = first.action?.signature.name ?? first.type;
-  return `${capitalize(name)} options…`;
+  return capitalize(first.action?.signature.name ?? first.type.toLowerCase());
 }
 
-/**
- * Groups choices that share a common action signature (e.g. every "walk"
- * action) once there are too many to show flat, so a long list of similar
- * choices collapses into a labeled, expandable sub-list. Below the
- * threshold, every choice is returned as its own singleton group.
- */
-export function groupChoices(choices: Turn[]): ChoiceGroup[] {
-  const items: ChoiceItem[] = choices.map((turn, index) => ({ index, turn }));
+function choiceNode(parentKey: string, item: ChoiceItem): ChoiceNode {
+  return { kind: "choice", key: `${parentKey}/${item.index}`, item };
+}
 
-  if (items.length <= GROUP_THRESHOLD) {
-    return items.map((item) => ({ key: `single:${item.index}`, label: null, items: [item] }));
-  }
-
+function bucketBy(items: ChoiceItem[], keyOf: (item: ChoiceItem) => string) {
   const buckets = new Map<string, ChoiceItem[]>();
   for (const item of items) {
-    const key = bucketKey(item.turn);
+    const key = keyOf(item);
     const bucket = buckets.get(key);
     if (bucket) bucket.push(item);
     else buckets.set(key, [item]);
   }
+  return buckets;
+}
 
-  const groups: ChoiceGroup[] = [];
-  for (const [key, bucket] of buckets) {
-    if (bucket.length === 1) {
-      groups.push({ key, label: null, items: bucket });
-    } else {
-      groups.push({ key, label: groupLabel(bucket), items: bucket });
+/** One character's choices, split by action type once there are more than a few of them. */
+function characterChildren(
+  groupKey: string,
+  items: ChoiceItem[],
+): ChoiceNode[] {
+  if (items.length <= ACTION_TYPE_THRESHOLD) {
+    return items.map((item) => choiceNode(groupKey, item));
+  }
+
+  const buckets = bucketBy(
+    items,
+    (item) => item.turn.action?.signature.name ?? item.turn.type,
+  );
+  if (buckets.size === 1) {
+    return items.map((item) => choiceNode(groupKey, item));
+  }
+
+  return [...buckets].map(([actionType, bucket]) => {
+    const key = `${groupKey}/action:${actionType}`;
+    return bucket.length === 1
+      ? choiceNode(groupKey, bucket[0])
+      : {
+          kind: "group",
+          key,
+          label: actionTypeLabel(bucket),
+          count: bucket.length,
+          children: bucket.map((item) => choiceNode(key, item)),
+        };
+  });
+}
+
+/**
+ * Organizes choices for display:
+ *  1. By consenting character. An action with several consenting characters
+ *     is listed under each of them, so it can be found from any of them;
+ *     groups appear in the order their characters first appear.
+ *  2. Within a character, by action type (e.g. every "walk") once that
+ *     character has more than three choices.
+ */
+export function groupChoices(choices: Turn[]): ChoiceNode[] {
+  const items: ChoiceItem[] = choices.map((turn, index) => ({ index, turn }));
+
+  if (items.length <= FLAT_THRESHOLD) {
+    return items.map((item) => choiceNode("flat", item));
+  }
+
+  const characters = new Map<number, { entity: Entity; items: ChoiceItem[] }>();
+  const unconsented: ChoiceItem[] = [];
+  const noAction: ChoiceItem[] = [];
+
+  for (const item of items) {
+    const action = item.turn.action;
+    if (!action) {
+      noAction.push(item);
+      continue;
+    }
+    if (action.consenting.length === 0) {
+      unconsented.push(item);
+      continue;
+    }
+    const seen = new Set<number>();
+    for (const entity of action.consenting) {
+      if (seen.has(entity.id)) continue;
+      seen.add(entity.id);
+      const group = characters.get(entity.id);
+      if (group) group.items.push(item);
+      else characters.set(entity.id, { entity, items: [item] });
     }
   }
-  return groups;
+
+  const nodes: ChoiceNode[] = [...characters.values()].map(
+    ({ entity, items: own }) => {
+      const key = `character:${entity.id}`;
+      return {
+        kind: "group",
+        key,
+        label: characterLabel(entity),
+        count: own.length,
+        children: characterChildren(key, own),
+      };
+    },
+  );
+
+  if (unconsented.length > 0) {
+    const key = "other";
+    nodes.push({
+      kind: "group",
+      key,
+      label: "Other actions",
+      count: unconsented.length,
+      children: characterChildren(key, unconsented),
+    });
+  }
+
+  for (const item of noAction) {
+    nodes.push(choiceNode("loose", item));
+  }
+
+  return nodes;
 }
