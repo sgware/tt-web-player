@@ -124,10 +124,10 @@ export function ConnectForm({
 
       {/* Always shown, even when every setting was supplied via URL parameters. */}
       <p className="text-muted-foreground text-sm">
-        You must be at least 18 years old to play. We record the choices you make and may release
-        that data for research. We do not record your name or other personal information. Please
-        read our{" "}
-        <a href="/consent.html" className="text-foreground underline underline-offset-4">
+        You must be at least 18 years old to play. We record the choices you make and questions you
+        answer. We may release that data publicly for research. We do not record your name or other
+        personal information. Before you play, you must read our{" "}
+        <a href="/consent.php" className="text-foreground underline underline-offset-4">
           consent page
         </a>
         .
