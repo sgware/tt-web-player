@@ -26,10 +26,6 @@ interface ConnectFormProps {
   onSubmit: () => void;
 }
 
-/**
- * The interactive part of the Connect page. Only renders inputs for the
- * parameters that were left unset on the URL, per the requirements.
- */
 export function ConnectForm({
   params,
   connectInfo,
@@ -45,7 +41,8 @@ export function ConnectForm({
   onSubmit,
 }: ConnectFormProps) {
   const worldInvalid = params.world.isSet && !isValidToken(params.world.value);
-  const partnerInvalid = params.partner.isSet && !isValidToken(params.partner.value);
+  const partnerInvalid =
+    params.partner.isSet && !isValidToken(params.partner.value);
   const nameInvalid = !isValidToken(params.name);
 
   const invalidParams = [
@@ -54,12 +51,15 @@ export function ConnectForm({
     nameInvalid && "name",
   ].filter(Boolean) as string[];
 
-  // An unknown question set is an error rather than "no questions", so a
-  // mistyped study link is caught before anyone plays without being asked.
-  const questionsInvalid = params.questions !== "" && getQuestionSet(params.questions) === null;
+  const questionsInvalid =
+    params.questions !== "" && getQuestionSet(params.questions) === null;
 
   const passwordMissing = params.passwordRequired && password.trim() === "";
-  const canSubmit = ready && invalidParams.length === 0 && !questionsInvalid && !passwordMissing;
+  const canSubmit =
+    ready &&
+    invalidParams.length === 0 &&
+    !questionsInvalid &&
+    !passwordMissing;
 
   return (
     <form
@@ -72,8 +72,8 @@ export function ConnectForm({
       {invalidParams.length > 0 && (
         <p className="text-destructive flex items-center gap-2 text-sm">
           <AlertTriangle className="size-4 shrink-0" />
-          Invalid value for: {invalidParams.join(", ")}. Values may only contain letters, digits,
-          and underscores (max 20 characters).
+          Invalid value for: {invalidParams.join(", ")}. Values may only contain
+          letters, digits, and underscores (max 20 characters).
         </p>
       )}
 
@@ -86,7 +86,11 @@ export function ConnectForm({
       )}
 
       {params.passwordRequired && (
-        <PasswordField value={password} onChange={onPasswordChange} disabled={!ready} />
+        <PasswordField
+          value={password}
+          onChange={onPasswordChange}
+          disabled={!ready}
+        />
       )}
 
       {!params.world.isSet && (
@@ -122,12 +126,16 @@ export function ConnectForm({
         </div>
       )}
 
-      {/* Always shown, even when every setting was supplied via URL parameters. */}
       <p className="text-muted-foreground text-sm">
-        You must be at least 18 years old to play. We record the choices you make and questions you
-        answer. We may release that data publicly for research. We do not record your name or other
-        personal information. Before you play, you must read our{" "}
-        <a href="/consent.php" className="text-foreground underline underline-offset-4">
+        You must be at least 18 years old to play. We record the choices you
+        make and questions you answer. We may release that data publicly for
+        research. We do not record your name or other personal information.
+        Before you play, you must read our{" "}
+        <a
+          target="_blank"
+          href="/consent.php"
+          className="text-foreground underline underline-offset-4"
+        >
           consent page
         </a>
         .
