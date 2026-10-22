@@ -18,10 +18,6 @@ export const TT_SERVER_VERSION = "0.10.0";
 /** Time (in seconds) a user has to make a choice once it's their turn. */
 export const CHOICE_TIME_SECONDS = 180;
 
-export const TIMER_BAR_COLOR = "#ef4444";
-
-export const TIMER_BAR_HEIGHT_PX = 4;
-
 /**
  * Builds the WebSocket URL for the Tandem Tales
  * connects with `wss://`, regardless of how the page itself was loaded.
