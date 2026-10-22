@@ -51,8 +51,6 @@ function characterLabel(entity: Entity): string {
 function actionTypeLabel(bucket: ChoiceItem[]): string {
   const first = bucket[0].turn;
 
-  // When every item is a different outcome (SUCCEED/FAIL/...) of the exact
-  // same action, the action's own neutral description reads best.
   if (
     first.action &&
     bucket.every((item) => item.turn.action?.id === first.action?.id)
@@ -60,8 +58,6 @@ function actionTypeLabel(bucket: ChoiceItem[]): string {
     return `${capitalize(first.action.description.replace(/\.$/, ""))}…`;
   }
 
-  // A long shared opening ("Go to the…") says more than the bare action
-  // type; a short one ("The guard…") just repeats the character's group.
   const prefix = commonWordPrefix(bucket.map((item) => item.turn.description));
   if (prefix.split(" ").filter(Boolean).length >= 3) {
     return `${prefix}…`;
@@ -115,19 +111,27 @@ function characterChildren(
   });
 }
 
-/**
- * Organizes choices for display:
- *  1. By consenting character. An action with several consenting characters
- *     is listed under each of them, so it can be found from any of them;
- *     groups appear in the order their characters first appear.
- *  2. Within a character, by action type (e.g. every "walk") once that
- *     character has more than three choices.
- */
+function isGameMasterPass(node: ChoiceNode): boolean {
+  return (
+    node.kind === "choice" &&
+    node.item.turn.role === "GAME_MASTER" &&
+    node.item.turn.type === "PASS"
+  );
+}
+
+/** The game master's pass -- letting the player act -- always leads the list. */
+function gameMasterPassFirst(nodes: ChoiceNode[]): ChoiceNode[] {
+  return [
+    ...nodes.filter(isGameMasterPass),
+    ...nodes.filter((node) => !isGameMasterPass(node)),
+  ];
+}
+
 export function groupChoices(choices: Turn[]): ChoiceNode[] {
   const items: ChoiceItem[] = choices.map((turn, index) => ({ index, turn }));
 
   if (items.length <= FLAT_THRESHOLD) {
-    return items.map((item) => choiceNode("flat", item));
+    return gameMasterPassFirst(items.map((item) => choiceNode("flat", item)));
   }
 
   const characters = new Map<number, { entity: Entity; items: ChoiceItem[] }>();
@@ -182,5 +186,5 @@ export function groupChoices(choices: Turn[]): ChoiceNode[] {
     nodes.push(choiceNode("loose", item));
   }
 
-  return nodes;
+  return gameMasterPassFirst(nodes);
 }
