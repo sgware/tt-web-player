@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { TIMER_BAR_COLOR, TIMER_BAR_HEIGHT_PX } from "@/config/settings";
 import { TURN_TIMER_TICK_MS } from "@/hooks/use-turn-timer";
+import { cn } from "@/lib/utils";
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -10,46 +10,45 @@ function formatTime(seconds: number): string {
 
 interface TurnTimerProps {
   remainingSeconds: number;
+  fractionRemaining: number;
   expired: boolean;
 }
 
-/** Countdown */
-export function TurnTimer({ remainingSeconds, expired }: TurnTimerProps) {
+/** Countdown, with a background bar that drains as the time runs out */
+export function TurnTimer({
+  remainingSeconds,
+  fractionRemaining,
+  expired,
+}: TurnTimerProps) {
+  const percent = Math.min(1, Math.max(0, fractionRemaining)) * 100;
+  const runningOut = expired || remainingSeconds <= 30;
+  const time = formatTime(remainingSeconds);
+
   return (
     <Badge
-      variant={expired || remainingSeconds <= 30 ? "destructive" : "outline"}
-    >
-      Time to choose: {formatTime(remainingSeconds)}
-    </Badge>
-  );
-}
-
-interface TurnTimerBarProps {
-  fractionRemaining: number;
-}
-
-export function TurnTimerBar({ fractionRemaining }: TurnTimerBarProps) {
-  const percent = Math.min(1, Math.max(0, fractionRemaining)) * 100;
-
-  return (
-    <div
+      variant={runningOut ? "destructive" : "outline"}
       role="progressbar"
       aria-label="Time left to choose"
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(percent)}
-      className="pointer-events-none fixed inset-x-0 top-0 z-50"
-      style={{ height: TIMER_BAR_HEIGHT_PX }}
+      aria-valuetext={time}
+      className="relative"
     >
-      <div
-        className="h-full"
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-y-0 left-0",
+          runningOut
+            ? "bg-destructive/25 dark:bg-destructive/35"
+            : "bg-emerald-500/25 dark:bg-emerald-400/25",
+        )}
         style={{
           width: `${percent}%`,
-          backgroundColor: TIMER_BAR_COLOR,
-          boxShadow: `0 0 8px ${TIMER_BAR_COLOR}`,
           transition: `width ${TURN_TIMER_TICK_MS}ms linear`,
         }}
       />
-    </div>
+      <span className="relative">Time to choose: {time}</span>
+    </Badge>
   );
 }

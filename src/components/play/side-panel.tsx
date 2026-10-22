@@ -9,11 +9,6 @@ interface SidePanelProps {
   className?: string;
 }
 
-const CHANGE_LABEL: Record<EntityChange, string> = {
-  new: "New",
-  changed: "Updated",
-};
-
 /**
  * The Play Page's right side panel
  */
@@ -35,14 +30,7 @@ export function SidePanel({ entities, changes, className }: SidePanelProps) {
                   "border-amber-500 bg-amber-500/10 dark:border-amber-400 dark:bg-amber-400/10",
               )}
             >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">{entity.name}</p>
-                {change && (
-                  <span className="text-[0.65rem] font-semibold tracking-wide text-amber-700 uppercase dark:text-amber-300">
-                    {CHANGE_LABEL[change]}
-                  </span>
-                )}
-              </div>
+              <p className="text-sm font-medium">{entity.name}</p>
               <p className="text-muted-foreground text-sm">
                 {entity.description}
               </p>
