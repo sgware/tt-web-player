@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { ConnectForm } from "@/components/connect/connect-form";
 import { ConnectionStatusBanner } from "@/components/connect/connection-status-banner";
-import type { ParameterSummaryItem } from "@/components/connect/parameter-summary";
+import { ParameterSummary, type ParameterSummaryItem } from "@/components/connect/parameter-summary";
 import { ServerErrorDialog } from "@/components/connect/server-error-dialog";
 import { WaitingPanel } from "@/components/connect/waiting-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -65,50 +65,31 @@ export function ConnectPage() {
   const effectiveRole = params.role.isSet ? params.role.value : role;
   const effectivePartner = params.partner.isSet ? params.partner.value : partner;
 
-  const worldTitle = connectInfo?.worlds.find((w) => w.name === effectiveWorld)?.title;
-  const partnerTitle = connectInfo?.agents.find((a) => a.name === effectivePartner)?.title;
   const questionSet = getQuestionSet(params.questions);
 
-  const summaryItems: ParameterSummaryItem[] = [
-    {
-      label: "User ID",
-      displayValue: params.user,
-      source: params.user ? "url" : "default",
-    },
-    {
-      label: "Study",
-      displayValue: params.study,
-      source: params.study ? "url" : "default",
-    },
-    { label: "Agent name", displayValue: params.name, source: "default" },
-    {
-      label: "Password required",
-      displayValue: params.passwordRequired ? "Yes" : "No",
-      source: "default",
-    },
-    {
+  // World, role, and partner set on the URL have no input in the form, so
+  // the chosen values are shown here instead, with their descriptions.
+  const fixedSettings: ParameterSummaryItem[] = [];
+  if (params.world.isSet) {
+    const worldInfo = connectInfo?.worlds.find((w) => w.name === effectiveWorld);
+    fixedSettings.push({
       label: "Story world",
-      displayValue: effectiveWorld ? (worldTitle ?? effectiveWorld) : "Any world",
-      source: params.world.isSet ? "url" : "input-needed",
-    },
-    {
-      label: "Role",
-      displayValue: ROLE_LABEL[effectiveRole] ?? effectiveRole,
-      source: params.role.isSet ? "url" : "input-needed",
-    },
-    {
+      displayValue: effectiveWorld ? (worldInfo?.title ?? effectiveWorld) : "Any world",
+      description: worldInfo?.description,
+    });
+  }
+  if (params.role.isSet) {
+    fixedSettings.push({ label: "Role", displayValue: ROLE_LABEL[effectiveRole] ?? effectiveRole });
+  }
+  if (params.partner.isSet) {
+    const partnerInfo = connectInfo?.agents.find((a) => a.name === effectivePartner);
+    fixedSettings.push({
       label: "Partner",
-      displayValue: effectivePartner ? (partnerTitle ?? effectivePartner) : "Any partner",
-      source: params.partner.isSet ? "url" : "input-needed",
-    },
-    {
-      label: "In-game questions",
-      displayValue: questionSet?.label ?? (params.questions ? `Unknown: ${params.questions}` : "None"),
-      source: "default",
-    },
-  ];
-
-  const missingCount = summaryItems.filter((item) => item.source === "input-needed").length;
+      displayValue: effectivePartner ? (partnerInfo?.title ?? effectivePartner) : "Any partner",
+      description: partnerInfo?.description,
+    });
+  }
+  const allSettingsFixed = params.world.isSet && params.role.isSet && params.partner.isSet;
 
   function handleSubmit() {
     sendJoin({
@@ -166,31 +147,34 @@ export function ConnectPage() {
       <Card>
         <CardHeader>
           <CardTitle>Connect to Tandem Tales</CardTitle>
-          <CardDescription>
-            {view === "connect"
-              ? missingCount > 0
-                ? `${missingCount} of ${summaryItems.length} settings need your input before you can start.`
-                : "All settings are ready. Review them below, then start playing."
-              : "Your join request has been sent."}
-          </CardDescription>
+          {view === "connect" ? (
+            allSettingsFixed && (
+              <CardDescription>All settings are ready. Review them below, then start playing.</CardDescription>
+            )
+          ) : (
+            <CardDescription>Your join request has been sent.</CardDescription>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           <Separator />
           {view === "connect" ? (
-            <ConnectForm
-              params={params}
-              connectInfo={connectInfo}
-              ready={status === "open"}
-              password={password}
-              onPasswordChange={setPassword}
-              world={world}
-              onWorldChange={setWorld}
-              role={role}
-              onRoleChange={setRole}
-              partner={partner}
-              onPartnerChange={setPartner}
-              onSubmit={handleSubmit}
-            />
+            <>
+              {fixedSettings.length > 0 && <ParameterSummary items={fixedSettings} />}
+              <ConnectForm
+                params={params}
+                connectInfo={connectInfo}
+                ready={status === "open"}
+                password={password}
+                onPasswordChange={setPassword}
+                world={world}
+                onWorldChange={setWorld}
+                role={role}
+                onRoleChange={setRole}
+                partner={partner}
+                onPartnerChange={setPartner}
+                onSubmit={handleSubmit}
+              />
+            </>
           ) : (
             <WaitingPanel onCancel={handleCancel} />
           )}
