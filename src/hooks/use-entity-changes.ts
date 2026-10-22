@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { Entity } from "@/types/protocol";
 
@@ -9,15 +9,24 @@ function snapshot(entities: Entity[]): ReadonlyMap<number, string> {
 }
 
 /**
- * Tracks which side-panel entities have appeared or changed since the user
- * last took their turn. The baseline is the first set of entities shown, and
- * moves to whatever is visible each time `acknowledge()` is called -- i.e.
- * when the user makes a choice -- so everything that happens afterwards (the
- * result of that choice and everything the partner does) stays highlighted
- * until the user's next choice.
+ * Tracks which side-panel entities have appeared or changed since the turn
+ * last passed from the user to their partner. The baseline is the first set
+ * of entities shown, and moves to whatever is visible each time `myTurn`
+ * goes from true to false -- i.e. once the user's turn is over, results
+ * included -- so everything the partner does afterwards (and anything the
+ * user does on their next turn) stays highlighted until the turn passes
+ * again.
  */
-export function useEntityChanges(entities: Entity[] | null) {
+export function useEntityChanges(entities: Entity[] | null, myTurn: boolean) {
   const [baseline, setBaseline] = useState<ReadonlyMap<number, string> | null>(null);
+  const [wasMyTurn, setWasMyTurn] = useState(myTurn);
+
+  // Adjusted while rendering rather than in an effect, so the old highlights
+  // never flash for a frame once the turn has passed.
+  if (myTurn !== wasMyTurn) {
+    setWasMyTurn(myTurn);
+    if (!myTurn && entities) setBaseline(snapshot(entities));
+  }
 
   useEffect(() => {
     if (entities && baseline === null) setBaseline(snapshot(entities));
@@ -34,9 +43,5 @@ export function useEntityChanges(entities: Entity[] | null) {
     return result;
   }, [entities, baseline]);
 
-  const acknowledge = useCallback(() => {
-    if (entities) setBaseline(snapshot(entities));
-  }, [entities]);
-
-  return { changes, acknowledge };
+  return changes;
 }

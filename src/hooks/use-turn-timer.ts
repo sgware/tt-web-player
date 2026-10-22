@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-/** How often the countdown re-renders; the top bar eases between ticks. */
+/** How often the countdown re-renders; the timer's bar eases between ticks. */
 export const TURN_TIMER_TICK_MS = 250;
 
 export function useTurnTimer(
