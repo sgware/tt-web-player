@@ -5,7 +5,7 @@ import { QuestionsDialog } from "@/components/play/questions-dialog";
 import { RoleBanner } from "@/components/play/role-banner";
 import { SidePanel } from "@/components/play/side-panel";
 import { Transcript } from "@/components/play/transcript";
-import { TurnTimer, TurnTimerBar } from "@/components/play/turn-timer";
+import { TurnTimer } from "@/components/play/turn-timer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent } from "@/components/ui/card";
 import type { QuestionSet } from "@/config/questions";
@@ -75,6 +75,7 @@ export function PlayPage({
 
   const choices = stopInfo ? [] : (gameStatus?.choices ?? []);
   const choosing = choices.length > 0 && !pendingChoice;
+  const myTurn = (gameStatus?.choices.length ?? 0) > 0;
   const lastHistoryTurn = gameStatus?.history[gameStatus.history.length - 1];
   const timer = useTurnTimer(choosing, CHOICE_TIME_SECONDS, gameStatus);
 
@@ -85,7 +86,7 @@ export function PlayPage({
         : null,
     [gameStatus, startInfo],
   );
-  const entityChanges = useEntityChanges(entities);
+  const entityChanges = useEntityChanges(entities, myTurn);
   const showSidePanel = entities !== null && entities.length > 0;
 
   function handleChoose(index: number) {
@@ -93,7 +94,6 @@ export function PlayPage({
     if (!turn) return;
     setPendingChoice(turn);
     sendChoice(index);
-    entityChanges.acknowledge();
     questions.promptAfterChoice(turn);
   }
 
@@ -115,7 +115,6 @@ export function PlayPage({
   // scrolls inside its card, and the choices stay pinned underneath it.
   return (
     <div className="mx-auto flex h-svh w-full max-w-5xl flex-col gap-4 px-4 py-4 md:py-8">
-      {choosing && <TurnTimerBar fractionRemaining={timer.fractionRemaining} />}
       {questionSet && (
         <QuestionsDialog
           key={questions.reason === "stop" ? "stop" : "choice"}
@@ -153,6 +152,7 @@ export function PlayPage({
             <CardContent className="max-h-[45%] shrink-0 space-y-3 overflow-y-auto border-t pt-4">
               <TurnTimer
                 remainingSeconds={timer.remainingSeconds}
+                fractionRemaining={timer.fractionRemaining}
                 expired={timer.expired}
               />
               <ChoiceList
@@ -168,7 +168,7 @@ export function PlayPage({
         {showSidePanel && (
           <SidePanel
             entities={entities}
-            changes={entityChanges.changes}
+            changes={entityChanges}
             className="max-h-[30svh] md:max-h-full"
           />
         )}
