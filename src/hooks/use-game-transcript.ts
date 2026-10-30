@@ -13,22 +13,6 @@ function rolePhrase(role: Status["role"]): string {
     : "You are the game master. You go first.";
 }
 
-/**
- * Builds the play page's main text transcript incrementally from the stream
- * of Update messages, per the requirements:
- *  - The first Update contributes the initial state description and a
- *    role-based phrase.
- *  - Each later Update appends one line based on the *last* turn in the
- *    history: the current state's description if it SUCCEEDed, or that
- *    turn's own description if it FAILed. PROPOSE/PASS turns don't append a
- *    permanent line on their own -- they only shape the choice prompt.
- *  - Once the story's ending becomes non-null, its description is appended
- *    exactly once.
- *
- * Only the latest `state.description` is ever available (older snapshots
- * aren't retained by the protocol), so this has to be accumulated as
- * Updates arrive rather than recomputed from a static history array.
- */
 export function useGameTranscript(gameStatus: Status | null) {
   const [lines, setLines] = useState<TranscriptLine[]>([]);
   const [endingReached, setEndingReached] = useState(false);
