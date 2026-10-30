@@ -29,11 +29,11 @@ branch into its `/play` directory when its built.
 
 ## Survey questions
 
-You can change the survey questions by modifying the `src/config/questions.json` file.
+You can change the survey questions by modifying the [`src/config/questions.json`](src/config/questions.json) file.
 
 ## Changing configurations
 
-You also can change the configurations related to the tandem tales client. To do that, modify the file `src/config/settings.ts`
+You also can change the configurations related to the tandem tales client. To do that, modify the file [`src/config/settings.ts`](src/config/settings.ts)
 
 Following are the available settings that you can change:
 
