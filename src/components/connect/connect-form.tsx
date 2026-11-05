@@ -122,6 +122,7 @@ export function ConnectForm({
             value={partner}
             onChange={onPartnerChange}
             disabled={!ready}
+            selfName={params.name}
           />
         </div>
       )}
