@@ -36,12 +36,11 @@ You can change the survey questions by modifying the [`src/config/questions.json
 
 You also can change the configurations related to the tandem tales client. To do that, modify the file [`src/config/settings.ts`](src/config/settings.ts)
 
+`TT_SERVER_HOST` (The tt-server) hostname will be automatically set by the browser to be the current host (If running locally, it will be set to `localhost` or the host name that `tt-server` is running from)
+
 Following are the available settings that you can change:
 
 ```js
-
-/** IP address / hostname of the Tandem Tales server. */
-TT_SERVER_HOST  "localhost"
 
 /** Port number of the Tandem Tales server's secure WebSocket endpoint. */
 TT_SERVER_PORT 9006
