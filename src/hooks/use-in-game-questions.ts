@@ -41,7 +41,7 @@ export function useInGameQuestions(
 
   const promptAfterChoice = useCallback(
     (turn: Turn) => {
-      if (!questionSet?.askAfterChoiceTypes.includes(turn.type)) return;
+      if (!questionSet?.askAfterChoiceTypes[turn.role].includes(turn.type)) return;
       const now = Date.now();
       const last = lastChoicePromptAtRef.current;
       if (
