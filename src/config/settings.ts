@@ -6,7 +6,9 @@
  */
 
 /** IP address / hostname of the Tandem Tales server. */
-export const TT_SERVER_HOST = "localhost";
+// export const TT_SERVER_HOST = "localhost";
+export const TT_SERVER_HOST =
+  typeof window !== "undefined" ? window.location.hostname : "localhost";
 
 /** Port number of the Tandem Tales server's secure WebSocket endpoint. */
 export const TT_SERVER_PORT = 9006;
