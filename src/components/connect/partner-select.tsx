@@ -17,6 +17,7 @@ interface PartnerSelectProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  selfName: string;
 }
 
 /**
@@ -29,10 +30,13 @@ export function PartnerSelect({
   value,
   onChange,
   disabled,
+  selfName,
 }: PartnerSelectProps) {
   const agentsByName = new Map(agents.map((agent) => [agent.name, agent]));
   const candidates = available.filter((entry) => world === "" || entry.world === world);
-  const uniqueAgentNames = [...new Set(candidates.map((entry) => entry.agent))];
+  const uniqueAgentNames = [
+    ...new Set([...candidates.map((entry) => entry.agent), selfName]),
+  ];
 
   return (
     <Select
