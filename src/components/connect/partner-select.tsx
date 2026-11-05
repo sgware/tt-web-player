@@ -21,8 +21,9 @@ interface PartnerSelectProps {
 
 /**
  * Reusable dropdown for choosing which waiting agent to play with. Only
- * agents currently available for the selected world are shown, per the
- * requirements ("Any partner" is always the default option). Each agent is
+ * agents currently available for the selected world are shown. "Any partner"
+ * is only offered when the Connect message lists no waiting agents, since the
+ * server will not match two joiners that both have no partner preference.
  */
 export function PartnerSelect({
   agents,
@@ -46,7 +47,9 @@ export function PartnerSelect({
         <SelectValue placeholder="Any partner" />
       </SelectTrigger>
       <SelectContent position="popper" className="w-(--radix-select-trigger-width)">
-        <SelectItem value={ANY_PARTNER_VALUE}>Any partner</SelectItem>
+        {available.length === 0 && (
+          <SelectItem value={ANY_PARTNER_VALUE}>Any partner</SelectItem>
+        )}
         {uniqueAgentNames.map((name) => {
           const agent = agentsByName.get(name);
           return (
