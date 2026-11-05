@@ -20,10 +20,7 @@ interface PartnerSelectProps {
 }
 
 /**
- * Reusable dropdown for choosing which waiting agent to play with. Only
- * agents currently available for the selected world are shown. "Any partner"
- * is only offered when the Connect message lists no waiting agents, since the
- * server will not match two joiners that both have no partner preference.
+ * Partner select functionality update with no-option update
  */
 export function PartnerSelect({
   agents,
