@@ -116,6 +116,7 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
         let chunk: string;
         try {
           chunk = await readMessageText(event.data);
+          console.warn(chunk);
         } catch {
           return;
         }
