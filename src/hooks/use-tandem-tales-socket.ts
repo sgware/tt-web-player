@@ -86,6 +86,8 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
     const handleServerMessage = (parsed: unknown) => {
       if (!isServerMessage(parsed) || !isCurrent()) return;
 
+      console.warn(parsed);
+
       switch (parsed.type) {
         case "Connect":
           setConnectInfo(parsed);
@@ -114,7 +116,6 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
         let chunk: string;
         try {
           chunk = await readMessageText(event.data);
-          console.warn(chunk);
         } catch {
           return;
         }
