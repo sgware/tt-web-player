@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { getTandemTalesSocketUrl, TT_SERVER_VERSION } from "@/config/settings";
+import { createLineReader } from "@/lib/line-reader";
 import type {
   ChoiceMessage,
   ConnectMessage,
@@ -32,14 +33,6 @@ export interface TandemTalesSocketState {
   reconnect: () => void;
 }
 
-async function readMessageText(
-  data: string | Blob | ArrayBuffer,
-): Promise<string> {
-  if (typeof data === "string") return data;
-  if (data instanceof Blob) return data.text();
-  return new TextDecoder().decode(data);
-}
-
 /**
  * Owns the WebSocket connection to the Tandem Tales server for the entire
  */
@@ -53,7 +46,6 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
   const [stopInfo, setStopInfo] = useState<StopMessage | null>(null);
   const [endInfo, setEndInfo] = useState<EndMessage | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
-  const recvBufferRef = useRef("");
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -65,7 +57,6 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
     setGameStatus(null);
     setStopInfo(null);
     setEndInfo(null);
-    recvBufferRef.current = "";
 
     const socket = new WebSocket(getTandemTalesSocketUrl());
     socketRef.current = socket;
@@ -111,33 +102,23 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
       }
     };
 
-    socket.onmessage = (event: MessageEvent<string | Blob | ArrayBuffer>) => {
-      void (async () => {
-        let chunk: string;
-        try {
-          chunk = await readMessageText(event.data);
-          console.warn(chunk);
-        } catch {
-          return;
-        }
-        if (!isCurrent()) return;
+    socket.binaryType = "arraybuffer";
+    const feed = createLineReader((line) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(line);
+      } catch (error) {
+        console.error(
+          `Dropped unparseable server message (${line.length} chars)`,
+          error,
+        );
+        return;
+      }
+      handleServerMessage(parsed);
+    });
 
-        recvBufferRef.current += chunk;
-        let newlineIndex: number;
-        while ((newlineIndex = recvBufferRef.current.indexOf("\n")) >= 0) {
-          const line = recvBufferRef.current.slice(0, newlineIndex);
-          recvBufferRef.current = recvBufferRef.current.slice(newlineIndex + 1);
-          if (!line.trim()) continue;
-
-          let parsed: unknown;
-          try {
-            parsed = JSON.parse(line);
-          } catch {
-            continue;
-          }
-          handleServerMessage(parsed);
-        }
-      })();
+    socket.onmessage = (event: MessageEvent<string | ArrayBuffer>) => {
+      if (isCurrent()) feed(event.data);
     };
 
     return () => {
@@ -146,12 +127,6 @@ export function useTandemTalesSocket(): TandemTalesSocketState {
     };
   }, [attempt]);
 
-  // The server only accepts binary WebSocket frames (it rejects text frames
-  // with close code 1003), so every outgoing JSON payload is sent as bytes.
-  // The protocol is also newline-delimited even over WebSocket -- the
-  // server's line-oriented reader on the other side of the relay won't
-  // process a message until it sees the trailing "\n", so omitting it
-  // leaves the message stuck unprocessed until the connection closes.
   const sendBinary = useCallback((payload: unknown) => {
     const socket = socketRef.current;
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
