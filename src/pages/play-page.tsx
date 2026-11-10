@@ -53,6 +53,7 @@ export function PlayPage({
   const { lines, endingReached } = useGameTranscript(gameStatus);
   const questions = useInGameQuestions(
     questionSet,
+    gameStatus,
     stopInfo !== null,
     sendReport,
   );
@@ -63,7 +64,7 @@ export function PlayPage({
     setPendingChoice(null);
   }, [gameStatus]);
 
-  // The role actually played -- the server assigns one if the user asked for either.
+  // The role actually being played played
   const role = gameStatus?.role ?? startInfo.role;
 
   useEffect(() => {
@@ -94,11 +95,9 @@ export function PlayPage({
     if (!turn) return;
     setPendingChoice(turn);
     sendChoice(index);
-    questions.promptAfterChoice(turn);
   }
 
-  // `/after.php` lives at the web root, not next to this client in `/play`,
-  // and decides where the user goes once the session is over.
+  // Decides where the user goes once the session is over.
   const endLink = endInfo
     ? {
         href: `/after.php?${new URLSearchParams({
@@ -107,12 +106,17 @@ export function PlayPage({
           ...(study ? { study } : {}),
           session: endInfo.session,
         }).toString()}`,
-        label: "The story has ended. Click here!",
+        label: "Thank you for playing. Please click here.",
+      }
+    : null;
+  const questionsLink = questions.stopQuestionsPending
+    ? {
+        label:
+          "The story has ended! Click here to answer some final questions.",
+        onClick: questions.openStopPrompt,
       }
     : null;
 
-  // The page itself never scrolls: it fills the viewport, the transcript
-  // scrolls inside its card, and the choices stay pinned underneath it.
   return (
     <div className="mx-auto flex h-svh w-full max-w-5xl flex-col gap-4 px-4 py-4 md:py-8">
       {questionSet && (
@@ -146,6 +150,7 @@ export function PlayPage({
               pendingChoice ? `You chose: ${pendingChoice.description}` : null
             }
             stopMessage={stopInfo && !endingReached ? stopInfo.message : null}
+            questionsLink={questionsLink}
             endLink={endLink}
           />
           {choosing && (
