@@ -9,6 +9,7 @@ interface TranscriptProps {
   lines: TranscriptLine[];
   pendingChoiceText: string | null;
   stopMessage: string | null;
+  questionsLink: { label: string; onClick: () => void } | null;
   endLink: { href: string; label: string } | null;
   className?: string;
 }
@@ -17,11 +18,13 @@ export function Transcript({
   lines,
   pendingChoiceText,
   stopMessage,
+  questionsLink,
   endLink,
   className,
 }: TranscriptProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const followingRef = useRef(true);
+  const questionsLabel = questionsLink?.label;
   const endHref = endLink?.href;
 
   // New text always scrolls into view.
@@ -30,7 +33,7 @@ export function Transcript({
     if (!scroller) return;
     scroller.scrollTop = scroller.scrollHeight;
     followingRef.current = true;
-  }, [lines, pendingChoiceText, stopMessage, endHref]);
+  }, [lines, pendingChoiceText, stopMessage, questionsLabel, endHref]);
 
   useEffect(() => {
     const scroller = scrollRef.current;
@@ -63,6 +66,17 @@ export function Transcript({
           <p className="text-muted-foreground italic">{pendingChoiceText}</p>
         )}
         {stopMessage && <p>{stopMessage}</p>}
+        {questionsLink && (
+          <p>
+            <button
+              type="button"
+              onClick={questionsLink.onClick}
+              className="text-primary cursor-pointer text-left font-medium underline underline-offset-4"
+            >
+              {questionsLink.label}
+            </button>
+          </p>
+        )}
         {endLink && (
           <p>
             <a
