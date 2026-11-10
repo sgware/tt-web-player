@@ -15,10 +15,6 @@
         "statement": "I feel free to make meaningful choices that will influence this story."
       }
     ],
-    "askAfterChoiceTypes": {
-      "GAME_MASTER": ["PASS"],
-      "PLAYER": ["SUCCEED", "FAIL", "PROPOSE", "PASS"]
-    },
     "minSecondsBetweenAsks": 60,
     "askAtStop": true
   }

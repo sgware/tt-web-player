@@ -1,6 +1,5 @@
 
 import questionSetsJson from "@/config/questions.json";
-import type { TandemTalesRole } from "@/types/protocol";
 
 
 const questionSets: Record<string, QuestionSet> = questionSetsJson satisfies Record<
@@ -22,7 +21,6 @@ export interface QuestionSet {
   scale: string[];
   initialValue: number;
   questions: Question[];
-  askAfterChoiceTypes: Record<TandemTalesRole, string[]>;
   minSecondsBetweenAsks: number;
 }
 
