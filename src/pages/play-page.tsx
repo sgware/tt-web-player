@@ -23,7 +23,13 @@ import type {
   StopMessage,
   TandemTalesRole,
   Turn,
+  TurnType,
 } from "@/types/protocol";
+
+const WAITING_MESSAGES: Partial<Record<TurnType, string>> = {
+  PROPOSE: "Please wait for your partner to respond.",
+  PASS: "Please wait while your partner takes their turn.",
+};
 
 interface PlayPageProps {
   startInfo: StartMessage;
@@ -79,6 +85,12 @@ export function PlayPage({
   const myTurn = (gameStatus?.choices.length ?? 0) > 0;
   const lastHistoryTurn = gameStatus?.history[gameStatus.history.length - 1];
   const timer = useTurnTimer(choosing, CHOICE_TIME_SECONDS, gameStatus);
+  const myLastTurn =
+    pendingChoice ?? gameStatus?.history.findLast((turn) => turn.role === role);
+  const waitingMessage =
+    !choosing && !stopInfo && !gameStatus?.ending && myLastTurn
+      ? (WAITING_MESSAGES[myLastTurn.type] ?? null)
+      : null;
 
   const entities = useMemo(
     () =>
@@ -149,6 +161,7 @@ export function PlayPage({
             pendingChoiceText={
               pendingChoice ? `You chose: ${pendingChoice.description}` : null
             }
+            waitingMessage={waitingMessage}
             stopMessage={stopInfo && !endingReached ? stopInfo.message : null}
             questionsLink={questionsLink}
             endLink={endLink}

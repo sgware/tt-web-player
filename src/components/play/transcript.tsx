@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 import type { TranscriptLine } from "@/hooks/use-game-transcript";
@@ -8,6 +9,7 @@ const STICK_THRESHOLD_PX = 8;
 interface TranscriptProps {
   lines: TranscriptLine[];
   pendingChoiceText: string | null;
+  waitingMessage: string | null;
   stopMessage: string | null;
   questionsLink: { label: string; onClick: () => void } | null;
   endLink: { href: string; label: string } | null;
@@ -17,6 +19,7 @@ interface TranscriptProps {
 export function Transcript({
   lines,
   pendingChoiceText,
+  waitingMessage,
   stopMessage,
   questionsLink,
   endLink,
@@ -33,7 +36,14 @@ export function Transcript({
     if (!scroller) return;
     scroller.scrollTop = scroller.scrollHeight;
     followingRef.current = true;
-  }, [lines, pendingChoiceText, stopMessage, questionsLabel, endHref]);
+  }, [
+    lines,
+    pendingChoiceText,
+    waitingMessage,
+    stopMessage,
+    questionsLabel,
+    endHref,
+  ]);
 
   useEffect(() => {
     const scroller = scrollRef.current;
@@ -64,6 +74,15 @@ export function Transcript({
         ))}
         {pendingChoiceText && (
           <p className="text-muted-foreground italic">{pendingChoiceText}</p>
+        )}
+        {waitingMessage && (
+          <p role="status" className="text-muted-foreground italic">
+            <Loader2
+              aria-hidden="true"
+              className="mr-1.5 inline-block size-[1em] animate-spin align-[-0.125em]"
+            />
+            {waitingMessage}
+          </p>
         )}
         {stopMessage && <p>{stopMessage}</p>}
         {questionsLink && (
