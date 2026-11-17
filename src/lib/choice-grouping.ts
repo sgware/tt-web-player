@@ -1,13 +1,16 @@
 import type { Entity, Turn } from "@/types/protocol";
 
-/** At or below this many choices, everything is shown flat -- e.g. accepting or refusing a proposal. */
+
 const FLAT_THRESHOLD = 3;
 
-/** Above this many choices for one character, they are split further by action type. */
+
 const ACTION_TYPE_THRESHOLD = 3;
 
+export const FAILED_GROUP_KEY = "failed";
+
+const FAILED_GROUP_LABEL = "A character tries but fails to do something";
+
 export interface ChoiceItem {
-  /** Index into the original `choices` array -- what the Choice message must send. */
   index: number;
   turn: Turn;
 }
@@ -23,7 +26,7 @@ export type ChoiceNode =
       children: ChoiceNode[];
     };
 
-/** The longest common leading run of whole words shared by every description. */
+
 function commonWordPrefix(descriptions: string[]): string {
   const wordLists = descriptions.map((d) => d.split(/\s+/));
   const shortest = Math.min(...wordLists.map((w) => w.length));
@@ -43,7 +46,7 @@ function capitalize(word: string): string {
   return word.length === 0 ? word : word[0].toUpperCase() + word.slice(1);
 }
 
-/** How the story refers to a character (e.g. "the guard"), falling back to its internal name. */
+
 function characterLabel(entity: Entity): string {
   return capitalize(entity.description || entity.name);
 }
@@ -137,8 +140,13 @@ export function groupChoices(choices: Turn[]): ChoiceNode[] {
   const characters = new Map<number, { entity: Entity; items: ChoiceItem[] }>();
   const unconsented: ChoiceItem[] = [];
   const noAction: ChoiceItem[] = [];
+  const failed: ChoiceItem[] = [];
 
   for (const item of items) {
+    if (item.turn.type === "FAIL") {
+      failed.push(item);
+      continue;
+    }
     const action = item.turn.action;
     if (!action) {
       noAction.push(item);
@@ -184,6 +192,16 @@ export function groupChoices(choices: Turn[]): ChoiceNode[] {
 
   for (const item of noAction) {
     nodes.push(choiceNode("loose", item));
+  }
+
+  if (failed.length > 0) {
+    nodes.push({
+      kind: "group",
+      key: FAILED_GROUP_KEY,
+      label: FAILED_GROUP_LABEL,
+      count: failed.length,
+      children: characterChildren(FAILED_GROUP_KEY, failed),
+    });
   }
 
   return gameMasterPassFirst(nodes);

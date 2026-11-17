@@ -2,7 +2,11 @@ import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { type ChoiceNode, groupChoices } from "@/lib/choice-grouping";
+import {
+  type ChoiceNode,
+  FAILED_GROUP_KEY,
+  groupChoices,
+} from "@/lib/choice-grouping";
 import type { Turn } from "@/types/protocol";
 import { cn } from "@/lib/utils";
 
@@ -84,8 +88,9 @@ function ChoiceNodes({
 /**
  * The Play Page's interactive choice prompt. Choices are grouped by the
  * character who would take them, then by action type (see
- * `groupChoices`), as expandable groups. A lone group starts open, since
- * there is nothing else to pick between.
+ * `groupChoices`), as expandable groups. Failed attempts are collected in
+ * one group at the end. A lone group (not counting the failed-attempts
+ * group) starts open, since there is nothing else to pick between.
  */
 export function ChoiceList({
   choices,
@@ -94,7 +99,9 @@ export function ChoiceList({
 }: ChoiceListProps) {
   const nodes = groupChoices(choices);
   const [expanded, setExpanded] = useState<Set<string>>(() => {
-    const groups = nodes.filter((node) => node.kind === "group");
+    const groups = nodes.filter(
+      (node) => node.kind === "group" && node.key !== FAILED_GROUP_KEY,
+    );
     return new Set(groups.length === 1 ? [groups[0].key] : []);
   });
 
