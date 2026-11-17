@@ -23,13 +23,10 @@ import type {
   StopMessage,
   TandemTalesRole,
   Turn,
-  TurnType,
 } from "@/types/protocol";
 
-const WAITING_MESSAGES: Partial<Record<TurnType, string>> = {
-  PROPOSE: "Please wait for your partner to respond.",
-  PASS: "Please wait while your partner takes their turn.",
-};
+const WAITING_FOR_RESPONSE = "Please wait for your partner to respond.";
+const WAITING_FOR_TURN = "Please wait while your partner takes their turn.";
 
 interface PlayPageProps {
   startInfo: StartMessage;
@@ -88,13 +85,23 @@ export function PlayPage({
   const myLastTurn =
     pendingChoice ?? gameStatus?.history.findLast((turn) => turn.role === role);
 
-  const partnerResponded =
+  
+  const awaitingResponse =
     myLastTurn?.type === "PROPOSE" &&
-    !pendingChoice &&
-    lastHistoryTurn?.role !== role;
+    (pendingChoice !== null || lastHistoryTurn?.role === role);
+  
+  const nextTurnUnknown =
+    pendingChoice?.type === "SUCCEED" || pendingChoice?.type === "FAIL";
+  
   const waitingMessage =
-    !choosing && !stopInfo && !gameStatus?.ending && myLastTurn
-      ? (WAITING_MESSAGES[partnerResponded ? "PASS" : myLastTurn.type] ?? null)
+    !choosing &&
+    !stopInfo &&
+    !gameStatus?.ending &&
+    myLastTurn &&
+    !nextTurnUnknown
+      ? awaitingResponse
+        ? WAITING_FOR_RESPONSE
+        : WAITING_FOR_TURN
       : null;
 
   const entities = useMemo(
