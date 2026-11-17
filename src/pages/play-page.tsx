@@ -87,9 +87,14 @@ export function PlayPage({
   const timer = useTurnTimer(choosing, CHOICE_TIME_SECONDS, gameStatus);
   const myLastTurn =
     pendingChoice ?? gameStatus?.history.findLast((turn) => turn.role === role);
+
+  const partnerResponded =
+    myLastTurn?.type === "PROPOSE" &&
+    !pendingChoice &&
+    lastHistoryTurn?.role !== role;
   const waitingMessage =
     !choosing && !stopInfo && !gameStatus?.ending && myLastTurn
-      ? (WAITING_MESSAGES[myLastTurn.type] ?? null)
+      ? (WAITING_MESSAGES[partnerResponded ? "PASS" : myLastTurn.type] ?? null)
       : null;
 
   const entities = useMemo(
