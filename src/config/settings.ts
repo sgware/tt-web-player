@@ -17,7 +17,7 @@ export const TT_SERVER_PORT = 9006;
 export const TT_SERVER_VERSION = "1.0.0";
 
 /** Time (in seconds) a user has to make a choice once it's their turn. */
-export const CHOICE_TIME_SECONDS = 180;
+export const CHOICE_TIME_SECONDS = 60;
 
 /**
  * Builds the WebSocket URL for the Tandem Tales
