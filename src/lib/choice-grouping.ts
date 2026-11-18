@@ -2,14 +2,9 @@ import type { Entity, Turn } from "@/types/protocol";
 
 
 const FLAT_THRESHOLD = 3;
-
-
 const ACTION_TYPE_THRESHOLD = 3;
-
 const MIN_GROUP_SIZE = 3;
-
 export const FAILED_GROUP_KEY = "failed";
-
 const FAILED_GROUP_LABEL = "A character tries but fails to do something";
 
 export interface ChoiceItem {
