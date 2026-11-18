@@ -6,6 +6,8 @@ const FLAT_THRESHOLD = 3;
 
 const ACTION_TYPE_THRESHOLD = 3;
 
+const MIN_GROUP_SIZE = 3;
+
 export const FAILED_GROUP_KEY = "failed";
 
 const FAILED_GROUP_LABEL = "A character tries but fails to do something";
@@ -15,7 +17,7 @@ export interface ChoiceItem {
   turn: Turn;
 }
 
-/** A single choice button, or a labeled, expandable group of further nodes. */
+
 export type ChoiceNode =
   | { kind: "choice"; key: string; item: ChoiceItem }
   | {
@@ -100,17 +102,46 @@ function characterChildren(
     return items.map((item) => choiceNode(groupKey, item));
   }
 
-  return [...buckets].map(([actionType, bucket]) => {
+  return [...buckets].flatMap(([actionType, bucket]): ChoiceNode[] => {
+    if (bucket.length < MIN_GROUP_SIZE) {
+      return bucket.map((item) => choiceNode(groupKey, item));
+    }
     const key = `${groupKey}/action:${actionType}`;
-    return bucket.length === 1
-      ? choiceNode(groupKey, bucket[0])
-      : {
-          kind: "group",
-          key,
-          label: actionTypeLabel(bucket),
-          count: bucket.length,
-          children: bucket.map((item) => choiceNode(key, item)),
-        };
+    return [
+      {
+        kind: "group",
+        key,
+        label: actionTypeLabel(bucket),
+        count: bucket.length,
+        children: bucket.map((item) => choiceNode(key, item)),
+      },
+    ];
+  });
+}
+
+function isSmallGroup(node: ChoiceNode): boolean {
+  return node.kind === "group" && node.count < MIN_GROUP_SIZE;
+}
+
+function addShownIndices(node: ChoiceNode, shown: Set<number>) {
+  if (node.kind === "choice") shown.add(node.item.index);
+  else node.children.forEach((child) => addShownIndices(child, shown));
+}
+
+function inlineSmallGroups(nodes: ChoiceNode[]): ChoiceNode[] {
+  const shown = new Set<number>();
+  nodes
+    .filter((node) => !isSmallGroup(node))
+    .forEach((node) => addShownIndices(node, shown));
+
+  return nodes.flatMap((node) => {
+    if (node.kind === "choice" || !isSmallGroup(node)) return [node];
+    return node.children.filter((child) => {
+      if (child.kind === "group") return true;
+      if (shown.has(child.item.index)) return false;
+      shown.add(child.item.index);
+      return true;
+    });
   });
 }
 
@@ -204,5 +235,5 @@ export function groupChoices(choices: Turn[]): ChoiceNode[] {
     });
   }
 
-  return gameMasterPassFirst(nodes);
+  return gameMasterPassFirst(inlineSmallGroups(nodes));
 }
