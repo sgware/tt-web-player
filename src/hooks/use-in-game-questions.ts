@@ -32,6 +32,7 @@ export function useInGameQuestions(
   questionSet: QuestionSet | null,
   gameStatus: Status | null,
   stopReceived: boolean,
+  canReport: boolean,
   sendReport: (item: string, value: string, comment: string) => void,
 ) {
   const [answers, setAnswers] = useState(() => initialAnswers(questionSet));
@@ -60,11 +61,15 @@ export function useInGameQuestions(
     setChoicePromptOpen(true);
   }, [questionSet, gameStatus]);
 
+  const choicePromptShowing = choicePromptOpen && canReport;
   const stopQuestionsPending =
-    !!questionSet?.askAtStop && stopReceived && !stopPromptSubmitted;
+    !!questionSet?.askAtStop &&
+    stopReceived &&
+    !stopPromptSubmitted &&
+    canReport;
   const stopPromptOpen =
-    stopQuestionsPending && stopPromptRequested && !choicePromptOpen;
-  const reason: QuestionsPromptReason | null = choicePromptOpen
+    stopQuestionsPending && stopPromptRequested && !choicePromptShowing;
+  const reason: QuestionsPromptReason | null = choicePromptShowing
     ? "choice"
     : stopPromptOpen
       ? "stop"
@@ -98,6 +103,10 @@ export function useInGameQuestions(
     submit,
     stopQuestionsPending,
     openStopPrompt,
-    readyToStop: stopReceived && !choicePromptOpen && !stopQuestionsPending,
+    readyToStop:
+      stopReceived &&
+      canReport &&
+      !choicePromptOpen &&
+      !stopQuestionsPending,
   };
 }

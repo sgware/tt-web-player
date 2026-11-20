@@ -75,15 +75,6 @@ export function Transcript({
         {pendingChoiceText && (
           <p className="text-muted-foreground italic">{pendingChoiceText}</p>
         )}
-        {waitingMessage && (
-          <p role="status" className="text-muted-foreground italic">
-            <Loader2
-              aria-hidden="true"
-              className="mr-1.5 inline-block size-[1em] animate-spin align-[-0.125em]"
-            />
-            {waitingMessage}
-          </p>
-        )}
         {stopMessage && <p>{stopMessage}</p>}
         {questionsLink && (
           <p>
@@ -94,6 +85,15 @@ export function Transcript({
             >
               {questionsLink.label}
             </button>
+          </p>
+        )}
+        {waitingMessage && (
+          <p role="status" className="text-muted-foreground italic">
+            <Loader2
+              aria-hidden="true"
+              className="mr-1.5 inline-block size-[1em] animate-spin align-[-0.125em]"
+            />
+            {waitingMessage}
           </p>
         )}
         {endLink && (
