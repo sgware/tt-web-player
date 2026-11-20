@@ -27,6 +27,10 @@ import type {
 
 const WAITING_FOR_RESPONSE = "Please wait for your partner to respond.";
 const WAITING_FOR_TURN = "Please wait while your partner takes their turn.";
+const WAITING_FOR_FINISH = "Please wait while your partner finishes.";
+
+/** The server's stop message when the user whose turn it is takes too long. */
+const TIMEOUT_STOP = /waited too long to make a choice/i;
 
 interface PlayPageProps {
   startInfo: StartMessage;
@@ -54,10 +58,15 @@ export function PlayPage({
   sendStop,
 }: PlayPageProps) {
   const { lines, endingReached } = useGameTranscript(gameStatus);
+  const myTurn = (gameStatus?.choices.length ?? 0) > 0;
+  
+  const timedOut =
+    stopInfo !== null && myTurn && TIMEOUT_STOP.test(stopInfo.message);
   const questions = useInGameQuestions(
     questionSet,
     gameStatus,
     stopInfo !== null,
+    endInfo === null && !timedOut,
     sendReport,
   );
   const [pendingChoice, setPendingChoice] = useState<Turn | null>(null);
@@ -79,7 +88,6 @@ export function PlayPage({
 
   const choices = stopInfo ? [] : (gameStatus?.choices ?? []);
   const choosing = choices.length > 0 && !pendingChoice;
-  const myTurn = (gameStatus?.choices.length ?? 0) > 0;
   const lastHistoryTurn = gameStatus?.history[gameStatus.history.length - 1];
   const timer = useTurnTimer(choosing, CHOICE_TIME_SECONDS, gameStatus);
   const myLastTurn =
@@ -102,6 +110,11 @@ export function PlayPage({
       ? awaitingResponse
         ? WAITING_FOR_RESPONSE
         : WAITING_FOR_TURN
+      : null;
+
+  const finishMessage =
+    stopInfo && !endInfo && (timedOut || questions.readyToStop)
+      ? WAITING_FOR_FINISH
       : null;
 
   const entities = useMemo(
@@ -173,7 +186,7 @@ export function PlayPage({
             pendingChoiceText={
               pendingChoice ? `You chose: ${pendingChoice.description}` : null
             }
-            waitingMessage={waitingMessage}
+            waitingMessage={waitingMessage ?? finishMessage}
             stopMessage={stopInfo && !endingReached ? stopInfo.message : null}
             questionsLink={questionsLink}
             endLink={endLink}
